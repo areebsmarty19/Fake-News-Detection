@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../.."
+		},
+		{
+			"name": "fake-news-detection",
+			"path": "../.."
+		}
+	],
+	"settings": {}
+}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/auth.css";
+import "../Styles/auth.css";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({ username: "", email: "", password: "" });
@@ -93,57 +93,69 @@ export default function SignUp() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2>Sign Up</h2>
-        <p>Create your account and start now.</p>
+    <div className="auth-shell">
+      <div className="auth-bg-orb auth-bg-orb--top" aria-hidden="true" />
+      <div className="auth-bg-orb auth-bg-orb--bottom" aria-hidden="true" />
 
-        <form onSubmit={handleSubmit}>
-          <div>
+      <div className="auth-card auth-card--enter auth-card--wide">
+        <div className="auth-badge">Join TruthCheck</div>
+        <h2>Create Account</h2>
+        <p>Start verifying information in real-time with your personal dashboard.</p>
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field-wrap">
             <label>Username</label>
-            <input
-              type="text"
-              name="username"
-              placeholder="Enter your username"
-              value={formData.username}
-              onChange={handleChange}
-              className={errors.username ? "input-error" : ""}
-            />
+            <div className="auth-input-wrap">
+              <span className="material-symbols-outlined auth-field-icon" aria-hidden="true">person</span>
+              <input
+                type="text"
+                name="username"
+                placeholder="Enter your username"
+                value={formData.username}
+                onChange={handleChange}
+                className={errors.username ? "input-error" : ""}
+              />
+            </div>
             {errors.username && <span className="error-text">{errors.username}</span>}
           </div>
 
-          <div>
+          <div className="auth-field-wrap">
             <label>Email address</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              className={errors.email ? "input-error" : ""}
-            />
+            <div className="auth-input-wrap">
+              <span className="material-symbols-outlined auth-field-icon" aria-hidden="true">mail</span>
+              <input
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                className={errors.email ? "input-error" : ""}
+              />
+            </div>
             {errors.email && <span className="error-text">{errors.email}</span>}
           </div>
 
-          <div>
+          <div className="auth-field-wrap">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="********"
-              value={formData.password}
-              onChange={handleChange}
-              className={errors.password ? "input-error" : ""}
-            />
+            <div className="auth-input-wrap">
+              <span className="material-symbols-outlined auth-field-icon" aria-hidden="true">lock</span>
+              <input
+                type="password"
+                name="password"
+                placeholder="********"
+                value={formData.password}
+                onChange={handleChange}
+                className={errors.password ? "input-error" : ""}
+              />
+            </div>
             {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
-            
-            {/* Display General API Error */}
-            {generalError && <span className="error-text api-error">{generalError}</span>}
 
+          {generalError && <span className="error-text api-error">{generalError}</span>}
 
-          <button type="submit" disabled={isLoading}>
+          <button type="submit" disabled={isLoading} className="auth-button">
             {isLoading ? "Signing Up..." : "Sign Up"}
+            <span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
           </button>
         </form>
 

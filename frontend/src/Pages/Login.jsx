@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "../styles/auth.css";
+import "../Styles/auth.css";
 
 // Login component receives the onLogin prop from App.jsx
 export default function Login({ onLogin }) {
@@ -84,48 +84,58 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2>Login</h2>
-        <p>Welcome back! Enter your details.</p>
+    <div className="auth-shell">
+      <div className="auth-bg-orb auth-bg-orb--top" aria-hidden="true" />
+      <div className="auth-bg-orb auth-bg-orb--bottom" aria-hidden="true" />
 
-        <form onSubmit={handleSubmit}>
-          <div>
+      <div className="auth-card auth-card--enter">
+        <div className="auth-badge">TruthCheck Access</div>
+        <h2>Welcome Back</h2>
+        <p>Sign in to continue analyzing news with confidence.</p>
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field-wrap">
             <label>Email address</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              className={errors.email ? "input-error" : ""}
-            />
+            <div className="auth-input-wrap">
+              <span className="material-symbols-outlined auth-field-icon" aria-hidden="true">mail</span>
+              <input
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                className={errors.email ? "input-error" : ""}
+              />
+            </div>
             {errors.email && <span className="error-text">{errors.email}</span>}
           </div>
 
-          <div>
+          <div className="auth-field-wrap">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="********"
-              value={formData.password}
-              onChange={handleChange}
-              className={errors.password ? "input-error" : ""}
-            />
+            <div className="auth-input-wrap">
+              <span className="material-symbols-outlined auth-field-icon" aria-hidden="true">lock</span>
+              <input
+                type="password"
+                name="password"
+                placeholder="********"
+                value={formData.password}
+                onChange={handleChange}
+                className={errors.password ? "input-error" : ""}
+              />
+            </div>
             {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
-            
-            {/* Display General API Error */}
-            {generalError && <span className="error-text api-error">{generalError}</span>}
 
-          <button type="submit" disabled={isLoading}>
+          {generalError && <span className="error-text api-error">{generalError}</span>}
+
+          <button type="submit" disabled={isLoading} className="auth-button">
             {isLoading ? "Logging in..." : "Log In"}
+            <span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
           </button>
         </form>
 
         <p className="footer-text">
-          Don’t have an account? <Link to="/signup">Sign Up</Link>
+          Don't have an account? <Link to="/signup">Sign Up</Link>
         </p>
       </div>
     </div>

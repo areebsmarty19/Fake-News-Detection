@@ -1,6 +1,11 @@
 import random
 import pandas as pd
 import os
+import xml.etree.ElementTree as ET
+import re
+from html import unescape
+from urllib.parse import quote_plus
+from urllib.request import Request, urlopen
 from flask import Flask, request, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -81,6 +86,126 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = False
 
 db = SQLAlchemy(app)
+
+TRUSTED_NEWS_SOURCES = {
+    "Reuters",
+    "The Hindu",
+    "NDTV News",
+    "The Indian Express",
+    "Economic Times",
+    "Hindustan Times",
+    "Livemint",
+    "Times of India",
+    "Business Standard",
+    "Deccan Herald",
+}
+
+
+def extract_image_url_from_item(item):
+    """Extract best-effort image URL from a Google News RSS item."""
+    media_namespace = "{http://search.yahoo.com/mrss/}"
+
+    thumbnail = item.find(f"{media_namespace}thumbnail")
+    if thumbnail is not None and thumbnail.get("url"):
+        return thumbnail.get("url")
+
+    media_content = item.find(f"{media_namespace}content")
+    if media_content is not None and media_content.get("url"):
+        return media_content.get("url")
+
+    description = unescape(item.findtext("description") or "")
+    match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', description, flags=re.IGNORECASE)
+    if match:
+        return match.group(1)
+
+    return ""
+
+
+def predict_news_text(text):
+    """Classify short news text and return normalized prediction fields."""
+    if model is None:
+        return {
+            "prediction": "Unknown",
+            "confidence": 0.0,
+            "isFake": False,
+        }
+
+    MAX_LENGTH = 15
+    tokens = tokenizer(
+        [text],
+        max_length=MAX_LENGTH,
+        padding="max_length",
+        truncation=True,
+        return_tensors="pt"
+    )
+
+    seq = tokens['input_ids'].to(device)
+    mask = tokens['attention_mask'].to(device)
+
+    with torch.no_grad():
+        preds = model(seq, mask)
+        log_probs = preds.cpu().numpy()[0]
+
+    pred_idx = int(np.argmax(log_probs))
+    prediction = "Fake" if pred_idx == 1 else "True"
+    confidence = float(np.exp(np.max(log_probs)))
+
+    return {
+        "prediction": prediction,
+        "confidence": round(confidence, 4),
+        "isFake": prediction == "Fake",
+    }
+
+
+def fetch_top_india_news(limit=10, query="India"): 
+    """Fetch top India news headlines from Google News RSS and prefer trusted sources."""
+    rss_url = (
+        "https://news.google.com/rss/search?q="
+        f"{quote_plus(query + ' when:1d')}"
+        "&hl=en-IN&gl=IN&ceid=IN:en"
+    )
+
+    req = Request(rss_url, headers={"User-Agent": "Mozilla/5.0"})
+    with urlopen(req, timeout=10) as response:
+        rss_bytes = response.read()
+
+    root = ET.fromstring(rss_bytes)
+    channel = root.find("channel")
+    if channel is None:
+        return []
+
+    items = channel.findall("item")
+    trusted_items = []
+    fallback_items = []
+
+    for item in items:
+        title = (item.findtext("title") or "").strip()
+        link = (item.findtext("link") or "").strip()
+        source = (item.findtext("source") or "").strip()
+        published_at = (item.findtext("pubDate") or "").strip()
+        image_url = extract_image_url_from_item(item)
+
+        if not title or not link:
+            continue
+
+        news_item = {
+            "title": title,
+            "link": link,
+            "source": source or "Google News",
+            "publishedAt": published_at,
+            "imageUrl": image_url,
+        }
+
+        if source in TRUSTED_NEWS_SOURCES:
+            trusted_items.append(news_item)
+        else:
+            fallback_items.append(news_item)
+
+    selected = trusted_items[:limit]
+    if len(selected) < limit:
+        selected.extend(fallback_items[: limit - len(selected)])
+
+    return selected[:limit]
 
 # =========================
 # 4. USER MODEL
@@ -226,6 +351,31 @@ def random_news():
     random.shuffle(news_list)
 
     return jsonify(news_list)
+
+
+@app.route('/api/top-news-analysis', methods=['GET'])
+def top_news_analysis():
+    limit = request.args.get('limit', default=10, type=int)
+    query = request.args.get('query', default='India', type=str)
+    limit = max(1, min(limit, 10))
+
+    try:
+        top_news = fetch_top_india_news(limit=limit, query=query)
+    except Exception as e:
+        return jsonify({'error': f'Failed to fetch top news: {str(e)}'}), 502
+
+    analyzed_news = []
+    for article in top_news:
+        prediction_result = predict_news_text(article['title'])
+        analyzed_news.append({
+            **article,
+            **prediction_result,
+        })
+
+    return jsonify({
+        'count': len(analyzed_news),
+        'items': analyzed_news,
+    })
 
 # =========================
 # 9. RUN APP
