@@ -149,7 +149,7 @@ project/
 ---
 
 ## 🌐 Application URLs
-
+* 🔹Live Working Url : https://areebpatel-fake-news-backend.hf.space  (It Might Take 2 - 3 Mins to load If Site is not visited for a long time !)
 * 🔹 Frontend: [http://localhost:5173](http://localhost:5173)
 * 🔹 Backend API: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
